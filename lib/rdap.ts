@@ -1,6 +1,8 @@
 import { DomainInfoResponse } from "@/lib/domain-info";
 
+/* eslint @typescript-eslint/no-explicit-any: "off" */
 export async function lookupRdap(domain: string, useRegistrar: boolean = false): Promise<DomainInfoResponse | null> {
+  if (useRegistrar) throw new Error("not yet implemented");
   const tld = domain.substring(domain.lastIndexOf(".") + 1);
   const tldRdapResponse = await fetch(`https://rdap.iana.org/domain/${tld}`, {next: {revalidate: 3600}});
   if (!tldRdapResponse.ok) throw new Error("Failed to get TLD RDAP server");

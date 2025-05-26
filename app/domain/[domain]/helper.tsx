@@ -20,7 +20,7 @@ export default function DomainResultClientHelper() {
     }
     
     if (stop) evt.stopPropagation();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     document.addEventListener("keypress", handleKeyPress)
@@ -28,6 +28,6 @@ export default function DomainResultClientHelper() {
     return () => {
       document.removeEventListener("keypress", handleKeyPress)
     }
-  }, []);
+  }, [handleKeyPress]);
   return (<></>);
 }

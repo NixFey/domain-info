@@ -1,5 +1,5 @@
 import Section from "@/components/section";
-import domainInfo, { DomainInfoResponse } from "@/lib/domain-info";
+import { DomainInfoResponse } from "@/lib/domain-info";
 
 export default function RegistrationInfo({ domainInfo }: { domainInfo: DomainInfoResponse | null }) {
   return (
