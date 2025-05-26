@@ -21,7 +21,9 @@ export default async function domainInfo(domain: string, fromRegistrar: boolean 
     return rdapResult;
   }
   
-  const whoisResult = await whoiser(domain);
+  const whoisResult = await whoiser(domain, {
+    follow: fromRegistrar ? 2 : 1
+  });
   console.log(whoisResult);
   const whoisServer = Object.keys(whoisResult)[0];
   const registryWhois = whoisResult[whoisServer] as WhoisSearchResult;
