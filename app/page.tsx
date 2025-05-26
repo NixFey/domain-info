@@ -14,7 +14,7 @@ export default function Home() {
         </Form>
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        
+        <a className="underline" href="https://github.com/nixfey/domain-info">Source Code</a>
       </footer>
     </div>
   );
