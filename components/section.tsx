@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function Section(
-  { title, id, hotkey, children }: { title: string, id: string, hotkey: string | undefined, children: React.ReactNode }
+  { title, id, hotkey, children }: { title: string, id: string, hotkey?: string, children: React.ReactNode }
 ) {
   return (
     <section id={id} className="m-2 p-4 rounded-lg border-1 border-foreground/[0.5] scroll-mt-2">

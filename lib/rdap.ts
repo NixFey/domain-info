@@ -1,4 +1,5 @@
 import { DomainInfoResponse } from "@/lib/domain-info";
+import { parseISO } from "date-fns";
 
 /* eslint @typescript-eslint/no-explicit-any: "off" */
 export async function lookupRdap(domain: string, useRegistrar: boolean = false): Promise<DomainInfoResponse | null> {
@@ -10,10 +11,19 @@ export async function lookupRdap(domain: string, useRegistrar: boolean = false):
   if (!tldRdapServer) return null;
 
   const domainRdapResponse = await fetch(`${tldRdapServer.replace(/\/$/, "")}/domain/${domain}`, {next: {revalidate: 18100}});
-  if (!domainRdapResponse.ok) throw new Error(`Failed to get RDAP response: ${domainRdapResponse.status}`);
+  if (!domainRdapResponse.ok) return null;
   const domainRdap = await domainRdapResponse.json();
+  
+  function getEvent(name: string): Date {
+    return parseISO(domainRdap.events?.find((e: any) => e.eventAction === name).eventDate);
+  }
 
   return {
+    source: `RDAP (${tldRdapServer})`,
+    createDate: getEvent("registration"),
+    domainStatuses: domainRdap.status as string[],
+    registryExpirationDate: getEvent("expiration"),
+    updateDate: getEvent("last changed"),
     dnssec: domainRdap.secureDNS?.delegationSigned && domainRdap.secureDNS?.zoneSigned,
     nameservers: domainRdap.nameservers?.map((n: any) => n.ldhName).filter((n: any) => n),
     registrantName: null,
