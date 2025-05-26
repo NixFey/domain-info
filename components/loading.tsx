@@ -1,7 +1,6 @@
 // Copied from https://github.com/davidhu2000/react-spinners/blob/main/src/RingLoader.tsx
 // Further modified to support NextJS loading pages (fully server rendered)
 function RingLoader({
-                      loading = true,
                       color = "#000000",
                       speedMultiplier = 1,
                       cssOverride = {},
