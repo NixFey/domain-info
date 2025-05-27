@@ -12,7 +12,7 @@ async function dnsQueryWrapper<T>(fn: () => Promise<T>): Promise<T | null> {
     return await fn();
   } catch (e: unknown) {
     // @ts-expect-error <-- this is bad, never do this. i don't care
-    if ('code' in e && (e.code === dns.NODATA || e.code === dns.NOTFOUND)) {
+    if ('code' in e && (e.code === dns.NODATA || e.code === dns.NOTFOUND || e.code === dns.BADRESP)) {
       return null;
     }
     
