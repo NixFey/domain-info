@@ -59,7 +59,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler: r,
-		Addr:    "127.0.0.1:3333",
+		Addr:    ":3333",
 	}
 	fmt.Println("Listening on :3333")
 	err := srv.ListenAndServe()
