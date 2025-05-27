@@ -205,11 +205,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		}
 	}
 
-	dnssec :=
-		rdapDomain.SecureDNS.ZoneSigned != nil &&
-			rdapDomain.SecureDNS.DelegationSigned != nil &&
-			(*rdapDomain.SecureDNS.ZoneSigned) &&
-			(*rdapDomain.SecureDNS.DelegationSigned)
+	dnssec := rdapDomain.SecureDNS.DelegationSigned != nil && (*rdapDomain.SecureDNS.DelegationSigned)
 
 	registrantIdx := slices.IndexFunc(rdapDomain.Entities, func(e rdap.Entity) bool {
 		return slices.Contains(e.Roles, "registrant")
