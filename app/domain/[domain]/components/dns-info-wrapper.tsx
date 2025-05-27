@@ -3,6 +3,8 @@ import { DnsProvider, DnsRecord, getIpsForProvider } from "@/lib/dns";
 import DnsInfo from "./dns-info";
 
 export default async function DnsInfoWrapper({ domainInfo, dnsName }: { domainInfo: DomainInfoResponse, dnsName: string }) {
+  if (!domainInfo.nameservers || domainInfo.nameservers.length == 0) return;
+  
   let response: Record<string, DnsRecord[]> = await (await fetch(process.env.API_BASE + "/dns/" + dnsName + "?ns=" + domainInfo.nameservers.join(","), {
     next: {
       revalidate: 60
@@ -11,6 +13,10 @@ export default async function DnsInfoWrapper({ domainInfo, dnsName }: { domainIn
   
   async function updateRecordsAction(deep: boolean, provider: DnsProvider): Promise<Record<string, DnsRecord[]>> {
     "use server";
+    if (!domainInfo.nameservers || domainInfo.nameservers.length === 0) {
+      return {};
+    }
+    
     const source = provider === "authoritative"
       ? `?ns=${domainInfo.nameservers.join(",")}`
       : `?ip=${getIpsForProvider(provider)}`;
