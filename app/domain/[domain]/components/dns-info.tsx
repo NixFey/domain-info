@@ -27,7 +27,7 @@ export default async function DnsInfo({ domainInfo, dnsName }: { domainInfo: Dom
   
   return (
     <Section title="DNS Records" id="dns-info" hotkey="d">
-      {dnsRecords.length && (<>
+      {dnsRecords?.length && (<>
         {/*<label>*/}
         {/*  <input name="dnsServer" id="dnsServer-authoritative" type="radio" value="authoritative" />*/}
         {/*  Authoritative*/}
@@ -44,7 +44,7 @@ export default async function DnsInfo({ domainInfo, dnsName }: { domainInfo: Dom
           {dnsRecords.map((r, idx) => <li key={idx}><strong>{r.type}:</strong> {r.data} {r.ttl ? `(ttl ${r.ttl})` : ""}</li>)}
         </ul>
       </>)}
-      {!dnsRecords.length && <>
+      {!dnsRecords?.length && <>
         No DNS records found
       </>}
     </Section>
