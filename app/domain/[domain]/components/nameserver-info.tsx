@@ -11,6 +11,15 @@ export default function NameserverInfo({ domainInfo }: { domainInfo: DomainInfoR
           {domainInfo.nameservers.map(n => (<li key={n}>{n}</li>))}
         </ul>
       )}
+
+      {domainInfo.dnssec !== null && domainInfo.dnssec !== undefined && <div>
+        <strong>DNSSEC: </strong>
+        {domainInfo.dnssec
+          ? <><span className="text-green-500">{'\u2713'}</span> Yes</>
+          : <><span className="text-red-500">{'\u2717'}</span> No</>
+        }
+      </div>}
+      
     </Section>
   );
 }

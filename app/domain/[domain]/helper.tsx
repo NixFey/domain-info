@@ -17,6 +17,9 @@ export default function DomainResultClientHelper() {
     } else if (evt.key === "r") {
       router.replace("#registration-info");
       stop = true;
+    } else if (evt.key === "d") {
+      router.replace("#dns-info");
+      stop = true;
     }
     
     if (stop) evt.stopPropagation();

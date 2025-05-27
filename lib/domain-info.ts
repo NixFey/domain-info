@@ -1,6 +1,7 @@
 import { lookupRdap } from "@/lib/rdap";
 import whoiser, { WhoisSearchResult } from "whoiser";
 import { parseISO } from "date-fns";
+import { parse as pslParse } from "psl";
 
 export type DomainInfoResponse = {
   source: string
@@ -14,14 +15,22 @@ export type DomainInfoResponse = {
   dnssec: boolean
 };
 
+
+
 export default async function domainInfo(domain: string, fromRegistrar: boolean = false): Promise<DomainInfoResponse | null> {
-  const rdapResult = await lookupRdap(domain, fromRegistrar);
+  const parsedDomain = pslParse(domain);
+  if (parsedDomain.error || !parsedDomain.domain) {
+    throw new Error(`Failed to parse domain: ${parsedDomain.error?.message ?? "Unknown error"}`);
+  }
+  const cleanDomain = parsedDomain.domain;
+  
+  const rdapResult = await lookupRdap(cleanDomain, fromRegistrar);
   
   if (rdapResult) {
     return rdapResult;
   }
   
-  const whoisResult = await whoiser(domain, {
+  const whoisResult = await whoiser(cleanDomain, {
     follow: fromRegistrar ? 2 : 1
   });
   console.log(whoisResult);

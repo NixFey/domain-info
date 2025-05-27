@@ -9,7 +9,7 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-start sm:items-center w-full">
         <p>Search for a domain...</p>
         <Form action={(data) => router.push(`domain/${data.get("domain")}`)} className="min-w-8 w-full sm:w-1/2">
-          <input required autoFocus={true} className="border-1 border-foreground rounded-md p-4 w-full" type="text" name="domain" />
+          <input required autoFocus={true} autoCapitalize="none" autoCorrect="off" className="border-1 border-foreground rounded-md p-4 w-full" type="text" name="domain" />
           <button type="submit" className="my-2 rounded-md cursor-pointer bg-foreground text-background p-2 w-full">Search</button>
         </Form>
       </main>

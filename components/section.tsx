@@ -9,7 +9,7 @@ export default function Section(
         {title}
         { hotkey
           ? <span
-            className="ml-auto inline-block font-mono bg-foreground/[0.1] border-1 border-foreground/[0.3] rounded-sm py-0.5 px-1">
+            className="text-base ml-auto inline-block font-mono bg-foreground/[0.1] border-1 border-foreground/[0.3] rounded-sm py-0.5 px-1">
             {hotkey}
           </span>
           : <></>

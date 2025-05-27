@@ -1,10 +1,13 @@
 import RegistrationInfo from "./components/registration-info";
 import NameserverInfo from "./components/nameserver-info";
+import DnsInfo from "./components/dns-info";
 import DomainResultClientHelper from "./helper";
 import Link from "next/link";
 import { Metadata } from "next";
 import domainInfo from "@/lib/domain-info";
 import Section from "@/components/section";
+import { Suspense } from "react";
+import Loading from "@/components/loading";
 
 type DomainResultProps = { params: Promise<{ domain: string }> };
 
@@ -16,6 +19,7 @@ export async function generateMetadata({ params }: DomainResultProps): Promise<M
 
 export default async function DomainResult({ params }: DomainResultProps) {
   const { domain } = await params;
+
   const info = await domainInfo(domain);
   
   return (
@@ -25,6 +29,9 @@ export default async function DomainResult({ params }: DomainResultProps) {
         ? <>
           <RegistrationInfo domainInfo={info} />
           <NameserverInfo domainInfo={info} />
+          <Suspense fallback={<Loading message={"Loading DNS info..."} />}>
+            <DnsInfo domainInfo={info} dnsName={domain} />
+          </Suspense>
           <p className="p-2">Source: {info.source}</p>
         </>
         : <Section title="404" id="domain-not-found">Domain not found... :(</Section>

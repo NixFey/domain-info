@@ -70,8 +70,8 @@ function RingLoader({
 export default function Loading({ message }: { message?: string }) {
   
   return (
-    <div className="w-full h-[50vh] flex flex-col justify-center items-center">
-      <RingLoader color="var(--foreground)" loading={true} />
+    <div className="w-full flex flex-col justify-center items-center py-4">
+      <RingLoader color="var(--foreground)" />
       <p>{message ?? "Loading..."}</p>
     </div>
   );
