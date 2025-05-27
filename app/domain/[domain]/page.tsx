@@ -4,10 +4,11 @@ import DnsInfo from "./components/dns-info";
 import DomainResultClientHelper from "./helper";
 import Link from "next/link";
 import { Metadata } from "next";
-import domainInfo from "@/lib/domain-info";
+import { DomainInfoResponse } from "@/lib/domain-info";
 import Section from "@/components/section";
 import { Suspense } from "react";
 import Loading from "@/components/loading";
+import DnsInfoWrapper from "@/app/domain/[domain]/components/dns-info-wrapper";
 
 type DomainResultProps = { params: Promise<{ domain: string }> };
 
@@ -20,7 +21,9 @@ export async function generateMetadata({ params }: DomainResultProps): Promise<M
 export default async function DomainResult({ params }: DomainResultProps) {
   const { domain } = await params;
 
-  const info = await domainInfo(domain);
+  const resp = await fetch(process.env.API_BASE + "/info/" + domain);
+  if (!resp.ok) throw new Error(await resp.text())
+  const info = await resp.json() as DomainInfoResponse;
   
   return (
     <article className="my-4 mb-200">
@@ -30,7 +33,7 @@ export default async function DomainResult({ params }: DomainResultProps) {
           <RegistrationInfo domainInfo={info} />
           <NameserverInfo domainInfo={info} />
           <Suspense fallback={<Loading message={"Loading DNS info..."} />}>
-            <DnsInfo domainInfo={info} dnsName={domain} />
+            <DnsInfoWrapper domainInfo={info} dnsName={domain} />
           </Suspense>
           <p className="p-2">Source: {info.source}</p>
         </>

@@ -1,11 +1,6 @@
-import { lookupRdap } from "@/lib/rdap";
-import whoiser, { WhoisSearchResult } from "whoiser";
-import { parseISO } from "date-fns";
-import { parse as pslParse } from "psl";
-
 export type DomainInfoResponse = {
   source: string
-  domainStatuses: string[],
+  statuses: string[],
   createDate: Date,
   updateDate: Date,
   registryExpirationDate: Date,
@@ -14,38 +9,3 @@ export type DomainInfoResponse = {
   nameservers: string[],
   dnssec: boolean
 };
-
-
-
-export default async function domainInfo(domain: string, fromRegistrar: boolean = false): Promise<DomainInfoResponse | null> {
-  const parsedDomain = pslParse(domain);
-  if (parsedDomain.error || !parsedDomain.domain) {
-    throw new Error(`Failed to parse domain: ${parsedDomain.error?.message ?? "Unknown error"}`);
-  }
-  const cleanDomain = parsedDomain.domain;
-  
-  const rdapResult = await lookupRdap(cleanDomain, fromRegistrar);
-  
-  if (rdapResult) {
-    return rdapResult;
-  }
-  
-  const whoisResult = await whoiser(cleanDomain, {
-    follow: fromRegistrar ? 2 : 1
-  });
-  console.log(whoisResult);
-  const whoisServer = Object.keys(whoisResult)[0];
-  const registryWhois = whoisResult[whoisServer] as WhoisSearchResult;
-  if (registryWhois["Domain Status"].length === 0) return null;
-  return {
-    source: `WHOIS (${whoisServer})`,
-    domainStatuses: registryWhois["Domain Status"] as string[],
-    createDate: parseISO(registryWhois["Created Date"] as string),
-    updateDate: parseISO(registryWhois["Updated Date"] as string),
-    registryExpirationDate: parseISO(registryWhois["Expiry Date"] as string),
-    dnssec: registryWhois["DNSSEC"] === "signedDelegation",
-    nameservers: registryWhois["Name Server"] as string[],
-    registrantName: null,
-    registrar: registryWhois["Registrar"] as string
-  };
-}

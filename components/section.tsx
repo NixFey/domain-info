@@ -1,10 +1,10 @@
-import React from "react";
+import React, { Ref } from "react";
 
 export default function Section(
-  { title, id, hotkey, children }: { title: string, id: string, hotkey?: string, children: React.ReactNode }
+  { title, id, hotkey, children, ref }: { title: string, id: string, hotkey?: string, children: React.ReactNode, ref?: Ref<HTMLElement> }
 ) {
   return (
-    <section id={id} className="m-2 p-4 rounded-lg border-1 border-foreground/[0.5] scroll-mt-2">
+    <section ref={ref} id={id} className="m-2 p-4 rounded-lg border-1 border-foreground/[0.5] scroll-mt-2 focus:border-blue-500">
       <h2 className="text-2xl my-1 w-full flex">
         {title}
         { hotkey

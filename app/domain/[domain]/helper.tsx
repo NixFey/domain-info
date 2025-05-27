@@ -5,6 +5,11 @@ import { useCallback, useEffect } from "react";
 export default function DomainResultClientHelper() {
   
   const router = useRouter();
+  
+  function scrollAndFocusId(id: string) {
+    router.replace(`#${id}`);
+    document.getElementById(id)?.focus();
+  }
 
   const handleKeyPress = useCallback((evt: KeyboardEvent) => {
     let stop = false;
@@ -12,13 +17,13 @@ export default function DomainResultClientHelper() {
       router.push("/");
       stop = true;
     } else if (evt.key === "n") {
-      router.replace("#nameserver-info");
+      scrollAndFocusId("nameserver-info");
       stop = true;
     } else if (evt.key === "r") {
-      router.replace("#registration-info");
+      scrollAndFocusId("registration-info");
       stop = true;
     } else if (evt.key === "d") {
-      router.replace("#dns-info");
+      scrollAndFocusId("dns-info");
       stop = true;
     }
     

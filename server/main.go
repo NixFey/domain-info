@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -53,9 +54,70 @@ func domainInfo(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func dnsInfo(w http.ResponseWriter, req *http.Request) {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", strings.Repeat(" ", 2))
+
+	hostname := mux.Vars(req)["hostname"]
+	ns := req.URL.Query().Get("ns")
+	ip := req.URL.Query().Get("ip")
+	deep, _ := strconv.ParseBool(req.URL.Query().Get("deep"))
+
+	if (ip != "") == (ns != "") {
+		w.WriteHeader(http.StatusInternalServerError)
+		encodeError := encoder.Encode(ErrorResp{
+			Type:          "error",
+			ErrorMessages: []string{"you must provide `ns`es or `ip`s, but not both"},
+		})
+
+		if encodeError != nil {
+			fmt.Printf("failed to encode error, uhhhhhhhhhhhhh %s", encodeError)
+		}
+
+		return
+	}
+
+	var info map[string][]DnsRecord
+	var err error
+	if ns != "" {
+		info, err = GetDnsRecordsFromNs(hostname, strings.Split(ns, ","), deep)
+	} else if ip != "" {
+		var ips []net.IP
+		for _, ip := range strings.Split(ip, ",") {
+			ips = append(ips, net.ParseIP(ip))
+		}
+
+		info, err = GetDnsRecordsFromIp(hostname, ips, deep)
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		encodeError := encoder.Encode(ErrorResp{
+			Type:          "error",
+			ErrorMessages: strings.Split(err.Error(), "\n"),
+		})
+
+		if encodeError != nil {
+			fmt.Printf("failed to encode error, uhhhhhhhhhhhhh %s", encodeError)
+		}
+
+		return
+	}
+
+	// Set the content type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Encode the data to JSON and write it to the response
+	err = encoder.Encode(info)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/info/{domain}", domainInfo).Methods("GET")
+	r.HandleFunc("/dns/{hostname}", dnsInfo).Methods("GET")
 
 	srv := &http.Server{
 		Handler: r,

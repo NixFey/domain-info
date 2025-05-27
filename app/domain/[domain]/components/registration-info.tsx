@@ -10,6 +10,7 @@ export default function RegistrationInfo({ domainInfo }: { domainInfo: DomainInf
     {name: "Updated", value: <Date date={domainInfo.updateDate} />},
     {name: "Expires (Registry)", value: <Date date={domainInfo.registryExpirationDate} />},
     {name: "Registrar", value: <>{domainInfo.registrar}</>},
+    {name: "Statuses", value: <ul className="flex flex-wrap gap-2">{domainInfo.statuses?.map((s, idx) => <li key={idx} className="border-1 border-foreground/[0.5] rounded-sm p-0.5">{s}</li>)}</ul>}
   ];
   return (
     <Section title="Registration Info" id="registration-info" hotkey="r">

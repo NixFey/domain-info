@@ -42,6 +42,7 @@ var (
 		lookupWhois: "whois",
 	}
 	LookupType_value = map[string]LookupType{
+		"":      lookupAuto,
 		"auto":  lookupAuto,
 		"rdap":  lookupRdap,
 		"whois": lookupWhois,
@@ -57,9 +58,28 @@ func ParseLookupType(s string) (LookupType, error) {
 	return value, nil
 }
 
+func getTldAndSld(domain string) (string, error) {
+	// todo: this is naive and should instead be using the public suffix list
+	parts := strings.Split(domain, ".")
+	if len(parts) < 2 {
+		return "", errors.New("domain too must contain two parts")
+	}
+
+	tld := parts[len(parts)-1]
+	sld := parts[len(parts)-2]
+
+	return sld + "." + tld, nil
+}
+
 func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainInfo, error) {
 	var info DomainInfo
 	var err error
+
+	domain, err = getTldAndSld(domain)
+	if err != nil {
+		return DomainInfo{}, err
+	}
+
 	if lookupType == lookupAuto || lookupType == lookupRdap {
 		info, err = getRdapInfo(domain, registrarInfo)
 		if err == nil {
@@ -171,7 +191,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		} else if evt.Action == "expiration" {
 			registrarExpirationDate = &eventTime
 		} else if evt.Action == "last changed" {
-			created = &eventTime
+			updated = &eventTime
 		}
 	}
 
@@ -181,7 +201,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 			return DomainInfo{}, errors.Join(errors.New("failed to parse event"), err)
 		}
 		if evt.Action == "expiration" {
-			registrarExpirationDate = &eventTime
+			registryExpirationDate = &eventTime
 		}
 	}
 
