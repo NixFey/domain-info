@@ -41,7 +41,7 @@ export default async function DnsInfo({ domainInfo, dnsName }: { domainInfo: Dom
         {/*  Cloudflare*/}
         {/*</label>*/}
         <ul>
-          {dnsRecords.map((r, idx) => <li key={idx}><strong>{r.type}:</strong> {r.data} {r.ttl ? `(ttl ${r.ttl})` : ""}</li>)}
+          {dnsRecords?.map((r, idx) => <li key={idx}><strong>{r.type}:</strong> {r.data} {r.ttl ? `(ttl ${r.ttl})` : ""}</li>)}
         </ul>
       </>)}
       {!dnsRecords?.length && <>
