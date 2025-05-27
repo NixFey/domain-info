@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import Loading from "@/components/loading";
 import Button from "@/components/button";
 
-export default function DnsInfo({ initialRecords, updateRecordsAction }: { initialRecords: Record<string, DnsRecord[]>, updateRecordsAction: (deep: boolean, provider: string) => Promise<Record<string, DnsRecord[]>> }) {
+export default function DnsInfo({ initialRecords, updateRecordsAction }: { initialRecords: Record<string, DnsRecord[]>, updateRecordsAction: (deep: boolean, provider: DnsProvider) => Promise<Record<string, DnsRecord[]>> }) {
   const sectionRef = useRef(null);
   const [deep, setDeep] = useState(false);
   const [provider, setProvider] = useState<DnsProvider>("authoritative");
