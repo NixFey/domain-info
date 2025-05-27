@@ -41,26 +41,29 @@ func GetDnsRecordsFromIp(hostname string, ips []net.IP, deep bool) (map[string][
 	c := new(dns.Client)
 
 	if !deep {
-		ip := ips[rand.Intn(len(ips))]
+		rand.Shuffle(len(ips), func(i, j int) {
+			ips[i], ips[j] = ips[j], ips[i]
+		})
+		for _, ip := range ips {
+			retMap := make(map[string][]DnsRecord)
+			res, err := getDnsRecords(c, hostname, ip)
+			if err != nil {
+				continue
+			}
 
-		retMap := make(map[string][]DnsRecord)
-		res, err := getDnsRecords(c, hostname, ip)
-		if err != nil {
-			return nil, err
+			retMap[ip.String()] = res
+
+			return retMap, nil
 		}
-
-		retMap[ip.String()] = res
-
-		return retMap, nil
 	}
 
 	retMap := make(map[string][]DnsRecord)
 	errs := make([]error, 0, len(ips))
 	for _, ip := range ips {
-		res, err := getDnsRecords(c, hostname, ip)
-		if err != nil {
-			errs = append(errs, err)
-		}
+		res, _ := getDnsRecords(c, hostname, ip)
+		//if err != nil {
+		//	errs = append(errs, err)
+		//}
 
 		retMap[ip.String()] = res
 	}
