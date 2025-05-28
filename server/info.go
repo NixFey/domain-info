@@ -8,6 +8,7 @@ import (
 	"github.com/openrdap/rdap"
 	"golang.org/x/net/publicsuffix"
 	"net/url"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -90,7 +91,16 @@ func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainIn
 }
 
 func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
-	client := &rdap.Client{}
+	var verboseFunc func(string)
+	if s, err := strconv.ParseBool(os.Getenv("VERBOSE")); err == nil && s {
+		verboseFunc = func(s string) {
+			fmt.Println(s)
+		}
+	}
+
+	client := &rdap.Client{
+		Verbose: verboseFunc,
+	}
 
 	var rdapDomain *rdap.Domain
 
