@@ -5,11 +5,11 @@ import DnsInfo from "./dns-info";
 export default async function DnsInfoWrapper({ domainInfo, dnsName }: { domainInfo: DomainInfoResponse, dnsName: string }) {
   if (!domainInfo.nameservers || domainInfo.nameservers.length == 0) return;
   
-  let response: Record<string, DnsRecord[]> = await (await fetch(process.env.API_BASE + "/dns/" + dnsName + "?ns=" + domainInfo.nameservers.join(","), {
-    next: {
-      revalidate: 60
-    }
-  })).json();
+  // let response: Record<string, DnsRecord[]> = await (await fetch(process.env.API_BASE + "/dns/" + dnsName + "?ns=" + domainInfo.nameservers.join(","), {
+  //   next: {
+  //     revalidate: 60
+  //   }
+  // })).json();
   
   async function updateRecordsAction(deep: boolean, provider: DnsProvider): Promise<Record<string, DnsRecord[]>> {
     "use server";
@@ -24,5 +24,5 @@ export default async function DnsInfoWrapper({ domainInfo, dnsName }: { domainIn
     return await (await fetch(url)).json();
   } 
   
-  return (<DnsInfo initialRecords={response} updateRecordsAction={updateRecordsAction} />);
+  return (<DnsInfo initialRecords={{}} updateRecordsAction={updateRecordsAction} />);
 }

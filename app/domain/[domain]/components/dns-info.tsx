@@ -11,7 +11,7 @@ export default function DnsInfo({ initialRecords, updateRecordsAction }: { initi
   const [deep, setDeep] = useState(false);
   const [provider, setProvider] = useState<DnsProvider>("authoritative");
   const [dnsRecords, setRecords] = useState(initialRecords);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     if (!updateRecordsAction) return;
