@@ -6,6 +6,7 @@ import (
 	"github.com/domainr/whois"
 	whoisparser "github.com/likexian/whois-parser"
 	"github.com/openrdap/rdap"
+	"golang.org/x/net/publicsuffix"
 	"net/url"
 	"slices"
 	"strconv"
@@ -59,16 +60,7 @@ func ParseLookupType(s string) (LookupType, error) {
 }
 
 func getTldAndSld(domain string) (string, error) {
-	// todo: this is naive and should instead be using the public suffix list
-	parts := strings.Split(domain, ".")
-	if len(parts) < 2 {
-		return "", errors.New("domain too must contain two parts")
-	}
-
-	tld := parts[len(parts)-1]
-	sld := parts[len(parts)-2]
-
-	return sld + "." + tld, nil
+	return publicsuffix.EffectiveTLDPlusOne(domain)
 }
 
 func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainInfo, error) {
@@ -258,9 +250,10 @@ func getWhoisInfo(domain string, registryInfo bool) (DomainInfo, error) {
 	if err != nil {
 		return DomainInfo{}, errors.Join(errors.New("failed to parse Whois request"), err)
 	}
+
 	parsedRegistryWhois := parsedWhois
 
-	if registryInfo {
+	if parsedWhois.Domain.WhoisServer != "" && registryInfo {
 		request, err := whois.NewRequest(domain)
 		request.Host = parsedWhois.Domain.WhoisServer
 		if err != nil {
