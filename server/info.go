@@ -90,7 +90,7 @@ func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainIn
 	return DomainInfo{}, err
 }
 
-func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
+func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 	var verboseFunc func(string)
 	if s, err := strconv.ParseBool(os.Getenv("VERBOSE")); err == nil && s {
 		verboseFunc = func(s string) {
@@ -139,7 +139,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		}
 	}
 
-	if registryInfo {
+	if registrarInfo {
 		registrarIdx := slices.IndexFunc(rdapDomain.Links, func(e rdap.Link) bool {
 			return e.Rel == "related"
 		})
@@ -190,7 +190,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		}
 		if evt.Action == "registration" {
 			created = &eventTime
-		} else if evt.Action == "expiration" {
+		} else if evt.Action == "expiration" && registrarInfo {
 			registrarExpirationDate = &eventTime
 		} else if evt.Action == "last changed" {
 			updated = &eventTime
@@ -245,7 +245,7 @@ func getRdapInfo(domain string, registryInfo bool) (DomainInfo, error) {
 	}, nil
 }
 
-func getWhoisInfo(domain string, registryInfo bool) (DomainInfo, error) {
+func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 	whoisClient := whois.NewClient(time.Duration(10) * time.Second)
 	request, err := whois.NewRequest(domain)
 	if err != nil {
@@ -263,7 +263,7 @@ func getWhoisInfo(domain string, registryInfo bool) (DomainInfo, error) {
 
 	parsedRegistryWhois := parsedWhois
 
-	if parsedWhois.Domain.WhoisServer != "" && registryInfo {
+	if parsedWhois.Domain.WhoisServer != "" && registrarInfo {
 		request, err := whois.NewRequest(domain)
 		request.Host = parsedWhois.Domain.WhoisServer
 		if err != nil {
@@ -289,6 +289,11 @@ func getWhoisInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		registrantName = &parsedWhois.Registrant.Name
 	}
 
+	var registrarExpirationDate *time.Time
+	if registrarInfo {
+		registrarExpirationDate = parsedWhois.Domain.ExpirationDateInTime
+	}
+
 	return DomainInfo{
 		Source:                  fmt.Sprintf("WHOIS (%s)", result.Host),
 		Domain:                  domain,
@@ -299,7 +304,7 @@ func getWhoisInfo(domain string, registryInfo bool) (DomainInfo, error) {
 		CreateDate:              parsedWhois.Domain.CreatedDateInTime,
 		UpdateDate:              parsedWhois.Domain.UpdatedDateInTime,
 		RegistryExpirationDate:  parsedRegistryWhois.Domain.ExpirationDateInTime,
-		RegistrarExpirationDate: parsedWhois.Domain.ExpirationDateInTime,
+		RegistrarExpirationDate: registrarExpirationDate,
 		Dnssec:                  parsedWhois.Domain.DNSSec,
 	}, nil
 }

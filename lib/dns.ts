@@ -1,6 +1,3 @@
-import { Resolver } from "node:dns/promises";
-import * as dns from "node:dns";
-
 export type DnsRecord = {
   type: "A" | "NS" | "CNAME" | "SOA" | "PTR" | "MX" | "TXT" | "SIG" | "KEY" | "AAAA" | "SRV" | "NAPTR" | "DS" | "DNSKEY" | "CAA",
   data: string,

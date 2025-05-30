@@ -59,18 +59,6 @@ export default function DnsInfo({ initialRecords, updateRecordsAction }: { initi
           {hasMultipleSources && <h3 className="text-lg font-bold">{source}</h3>}
           
           {sourceRecords?.length && (<div className={hasMultipleSources ? "ms-8" : ""}>
-            {/*<label>*/}
-            {/*  <input name="dnsServer" id="dnsServer-authoritative" type="radio" value="authoritative" />*/}
-            {/*  Authoritative*/}
-            {/*</label>*/}
-            {/*<label>*/}
-            {/*  <input name="dnsServer" id="dnsServer-google" type="radio" value="google" />*/}
-            {/*  Google*/}
-            {/*</label>*/}
-            {/*<label>*/}
-            {/*  <input name="dnsServer" id="dnsServer-cloudflare" type="radio" value="cloudflare" />*/}
-            {/*  Cloudflare*/}
-            {/*</label>*/}
             <ul>
               {sourceRecords?.map((r, idx) => <li key={idx}>
                 <strong>{r.type}:</strong> {r.data} {r.ttl ? `(ttl ${r.ttl})` : ""}</li>)}

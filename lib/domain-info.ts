@@ -1,11 +1,16 @@
+export type DomainInfoSource = "auto" | "rdap" | "whois";
+export type DomainInfoDepth = "registry" | "registrar";
+
 export type DomainInfoResponse = {
-  source: string
+  source: string,
+  domain: string,
+  registrar: string,
   statuses: string[],
+  nameservers: string[],
   createDate: Date,
   updateDate: Date,
-  registryExpirationDate: Date,
-  registrar: string,
+  registryExpirationDate: Date | null,
+  registrarExpirationDate: Date | null,
   registrantName: string | null,
-  nameservers: string[],
   dnssec: boolean
 };
