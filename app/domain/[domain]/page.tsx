@@ -38,9 +38,10 @@ export default async function DomainResult({ params, searchParams }: DomainResul
               <SearchParams initialSource="auto" initialDepth="registrar" />
             </div>
             <p>An error occurred looking up that domain name:</p>
-            {json.errors.length > 0 && (<ul>
+            {json.errors.length > 0 && (<ul className="my-4">
               {json.errors.map((e: string, idx: number) => (<li key={idx}>{e}</li>))}
             </ul>)}
+            <p>Try changing your search settings...</p>
             <DomainResultClientHelper />
           </article>
         );
