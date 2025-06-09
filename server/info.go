@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type DomainInfo struct {
@@ -38,11 +39,11 @@ const (
 )
 
 var (
-	LookupType_name = map[LookupType]string{
-		lookupAuto:  "auto",
-		lookupRdap:  "rdap",
-		lookupWhois: "whois",
-	}
+	//LookupType_name = map[LookupType]string{
+	//	lookupAuto:  "auto",
+	//	lookupRdap:  "rdap",
+	//	lookupWhois: "whois",
+	//}
 	LookupType_value = map[string]LookupType{
 		"":      lookupAuto,
 		"auto":  lookupAuto,
@@ -162,7 +163,15 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 			})
 
 			if err != nil {
-				return DomainInfo{}, errors.Join(errors.New("failed to fetch registry RDAP"), err)
+				if rdapResp != nil {
+					if rErr, ok := rdapResp.Object.(*rdap.Error); ok {
+						messages := []string{}
+						messages = append(messages, rErr.Title)
+						messages = slices.Concat(messages, rErr.Description)
+						return DomainInfo{}, errors.Join(errors.New("failed to fetch registrar RDAP"), errors.New(strings.Join(messages, ";")))
+					}
+				}
+				return DomainInfo{}, errors.Join(errors.New("failed to fetch registrar RDAP"), err)
 			}
 
 			if domain, ok := rdapResp.Object.(*rdap.Domain); ok {
@@ -264,8 +273,11 @@ func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 	parsedRegistryWhois := parsedWhois
 
 	if parsedWhois.Domain.WhoisServer != "" && registrarInfo {
+		cleanHost := strings.TrimFunc(parsedWhois.Domain.WhoisServer, func(r rune) bool {
+			return r == '/' || unicode.IsSpace(r)
+		})
 		request, err := whois.NewRequest(domain)
-		request.Host = parsedWhois.Domain.WhoisServer
+		request.Host = cleanHost
 		if err != nil {
 			return DomainInfo{}, errors.Join(errors.New("failed to create registrar Whois request"), err)
 		}
