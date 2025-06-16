@@ -3,14 +3,14 @@ import NameserverInfo from "./components/nameserver-info";
 import DomainResultClientHelper from "./helper";
 import Link from "next/link";
 import { Metadata } from "next";
-import { DomainInfoDepth, DomainInfoResponse, DomainInfoSource } from "@/lib/domain-info";
+import { DomainInfoSource, DomainInfoResponse, DomainInfoType } from "@/lib/domain-info";
 import Section from "@/components/section";
 import { Suspense } from "react";
 import Loading from "@/components/loading";
 import DnsInfoWrapper from "@/app/domain/[domain]/components/dns-info-wrapper";
 import SearchParams from "@/app/domain/[domain]/components/search-params";
 
-type DomainResultProps = { params: Promise<{ domain: string }>, searchParams: Promise<{ source: DomainInfoSource, depth: DomainInfoDepth }> };
+type DomainResultProps = { params: Promise<{ domain: string }>, searchParams: Promise<{ type: DomainInfoType, source: DomainInfoSource }> };
 
 export async function generateMetadata({ params }: DomainResultProps): Promise<Metadata> {
   return {
@@ -20,11 +20,11 @@ export async function generateMetadata({ params }: DomainResultProps): Promise<M
 
 export default async function DomainResult({ params, searchParams }: DomainResultProps) {
   const { domain } = await params;
-  const { source, depth } = await searchParams;
+  const { type, source } = await searchParams;
 
   const queryParams = new URLSearchParams({
-    t: source ?? "auto",
-    f: depth === "registry" ? "f" : "t"
+    type: type ?? "auto",
+    source: source ?? "auto"
   });
   const resp = await fetch(`${process.env.API_BASE}/info/${domain}?${queryParams}`);
   if (!resp.ok) {
@@ -35,7 +35,7 @@ export default async function DomainResult({ params, searchParams }: DomainResul
           <article className="my-4 mb-200 max-w-7xl mx-auto border-2 border-red-500/[0.5] rounded-lg p-4">
             <h1 className="text-4xl text-center sticky top-0"><span className="font-mono">{domain}</span> <Link href="/" className="text-base"><span className="underline">New Search</span> <span className="text-mono bg-foreground/[0.1] border-1 border-foreground/[0.3] rounded-sm py-0.5 px-1">/</span></Link></h1>
             <div className="mx-[-1rem]">
-              <SearchParams initialSource="auto" initialDepth="registrar" />
+              <SearchParams initialType="auto" initialSource="registrar" />
             </div>
             <p>An error occurred looking up that domain name:</p>
             {json.errors.length > 0 && (<ul className="my-4">
@@ -58,7 +58,7 @@ export default async function DomainResult({ params, searchParams }: DomainResul
       <h1 className="text-4xl text-center sticky top-0 bg-background"><span className="font-mono">{domain}</span> <Link href="/" className="text-base"><span className="underline">New Search</span> <span className="text-mono bg-foreground/[0.1] border-1 border-foreground/[0.3] rounded-sm py-0.5 px-1">/</span></Link></h1>
       {info
         ? <>
-          <SearchParams initialSource="auto" initialDepth="registrar" />
+          <SearchParams initialType="auto" initialSource="auto" />
           <RegistrationInfo domainInfo={info} />
           <NameserverInfo domainInfo={info} />
           <Suspense fallback={<Loading message={"Loading DNS info..."} />}>

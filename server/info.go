@@ -33,30 +33,51 @@ type DomainInfo struct {
 type LookupType uint8
 
 const (
-	lookupAuto LookupType = iota
-	lookupRdap
-	lookupWhois
+	lookupTypeAuto LookupType = iota
+	lookupTypeRdap
+	lookupTypeWhois
 )
 
 var (
-	//LookupType_name = map[LookupType]string{
-	//	lookupAuto:  "auto",
-	//	lookupRdap:  "rdap",
-	//	lookupWhois: "whois",
-	//}
-	LookupType_value = map[string]LookupType{
-		"":      lookupAuto,
-		"auto":  lookupAuto,
-		"rdap":  lookupRdap,
-		"whois": lookupWhois,
+	LookupTypeValue = map[string]LookupType{
+		"":      lookupTypeAuto,
+		"auto":  lookupTypeAuto,
+		"rdap":  lookupTypeRdap,
+		"whois": lookupTypeWhois,
 	}
 )
 
 func ParseLookupType(s string) (LookupType, error) {
 	s = strings.TrimSpace(strings.ToLower(s))
-	value, ok := LookupType_value[s]
+	value, ok := LookupTypeValue[s]
 	if !ok {
-		return lookupAuto, fmt.Errorf("%q is not a valid lookup type", s)
+		return lookupTypeAuto, fmt.Errorf("%q is not a valid lookup type", s)
+	}
+	return value, nil
+}
+
+type LookupSource uint8
+
+const (
+	lookupSourceAuto LookupSource = iota
+	lookupSourceRegistry
+	lookupSourceRegistrar
+)
+
+var (
+	LookupSourceValue = map[string]LookupSource{
+		"":          lookupSourceAuto,
+		"auto":      lookupSourceAuto,
+		"registry":  lookupSourceRegistry,
+		"registrar": lookupSourceRegistrar,
+	}
+)
+
+func ParseLookupSource(s string) (LookupSource, error) {
+	s = strings.TrimSpace(strings.ToLower(s))
+	value, ok := LookupSourceValue[s]
+	if !ok {
+		return lookupSourceAuto, fmt.Errorf("%q is not a valid lookup type", s)
 	}
 	return value, nil
 }
@@ -65,7 +86,7 @@ func getTldAndSld(domain string) (string, error) {
 	return publicsuffix.EffectiveTLDPlusOne(domain)
 }
 
-func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainInfo, error) {
+func GetInfo(lookupType LookupType, domain string, lookupSource LookupSource) (DomainInfo, error) {
 	var info DomainInfo
 	var err error
 
@@ -74,15 +95,15 @@ func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainIn
 		return DomainInfo{}, err
 	}
 
-	if lookupType == lookupAuto || lookupType == lookupRdap {
-		info, err = getRdapInfo(domain, registrarInfo)
+	if lookupType == lookupTypeAuto || lookupType == lookupTypeRdap {
+		info, err = getRdapInfo(domain, lookupSource)
 		if err == nil {
 			return info, err
 		}
 	}
 
-	if lookupType == lookupAuto || lookupType == lookupWhois {
-		info, err = getWhoisInfo(domain, registrarInfo)
+	if lookupType == lookupTypeAuto || lookupType == lookupTypeWhois {
+		info, err = getWhoisInfo(domain, lookupSource)
 		if err == nil {
 			return info, err
 		}
@@ -91,7 +112,7 @@ func GetInfo(lookupType LookupType, domain string, registrarInfo bool) (DomainIn
 	return DomainInfo{}, err
 }
 
-func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
+func getRdapInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 	var verboseFunc func(string)
 	if s, err := strconv.ParseBool(os.Getenv("VERBOSE")); err == nil && s {
 		verboseFunc = func(s string) {
@@ -140,7 +161,7 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 		}
 	}
 
-	if registrarInfo {
+	if lookupSource != lookupSourceRegistry {
 		registrarIdx := slices.IndexFunc(rdapDomain.Links, func(e rdap.Link) bool {
 			return e.Rel == "related"
 		})
@@ -165,17 +186,20 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 			if err != nil {
 				if rdapResp != nil {
 					if rErr, ok := rdapResp.Object.(*rdap.Error); ok {
-						messages := []string{}
+						var messages []string
 						messages = append(messages, rErr.Title)
 						messages = slices.Concat(messages, rErr.Description)
 						return DomainInfo{}, errors.Join(errors.New("failed to fetch registrar RDAP"), errors.New(strings.Join(messages, ";")))
 					}
 				}
-				return DomainInfo{}, errors.Join(errors.New("failed to fetch registrar RDAP"), err)
-			}
-
-			if domain, ok := rdapResp.Object.(*rdap.Domain); ok {
-				rdapDomain = domain
+				if lookupSource == lookupSourceRegistrar {
+					// If the source is auto we should just fall back to the registry
+					return DomainInfo{}, errors.Join(errors.New("failed to fetch registrar RDAP"), err)
+				}
+			} else {
+				if domain, ok := rdapResp.Object.(*rdap.Domain); ok {
+					rdapDomain = domain
+				}
 			}
 		}
 
@@ -199,7 +223,7 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 		}
 		if evt.Action == "registration" {
 			created = &eventTime
-		} else if evt.Action == "expiration" && registrarInfo {
+		} else if evt.Action == "expiration" && rdapDomain != registryRdapDomain {
 			registrarExpirationDate = &eventTime
 		} else if evt.Action == "last changed" {
 			updated = &eventTime
@@ -231,16 +255,22 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 				registrantName = &name
 			} else {
 				org := registrant.GetFirst("org")
-				if org != nil && registrant.GetFirst("org").String() != "" {
-					name := registrant.GetFirst("org").String()
+				if org != nil && registrant.GetFirst("org").Values()[0] != "" {
+					name := registrant.GetFirst("org").Values()[0]
 					registrantName = &name
 				}
 			}
 		}
 	}
 
+	var sourceUrl = ""
+
+	if rdapResp != nil {
+		sourceUrl = rdapResp.HTTP[0].URL
+	}
+
 	return DomainInfo{
-		Source:                  fmt.Sprintf("RDAP (%s)", rdapResp.HTTP[0].URL),
+		Source:                  fmt.Sprintf("RDAP (%s)", sourceUrl),
 		Domain:                  domain,
 		Registrar:               fmt.Sprintf("%s (IANA %d)", registrar, registrarIanaId),
 		RegistrantName:          registrantName,
@@ -254,7 +284,7 @@ func getRdapInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 	}, nil
 }
 
-func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
+func getWhoisInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 	whoisClient := whois.NewClient(time.Duration(10) * time.Second)
 	request, err := whois.NewRequest(domain)
 	if err != nil {
@@ -272,7 +302,7 @@ func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 
 	parsedRegistryWhois := parsedWhois
 
-	if parsedWhois.Domain.WhoisServer != "" && registrarInfo {
+	if parsedWhois.Domain.WhoisServer != "" && lookupSource != lookupSourceRegistry {
 		cleanHost := strings.TrimFunc(parsedWhois.Domain.WhoisServer, func(r rune) bool {
 			return r == '/' || unicode.IsSpace(r)
 		})
@@ -281,14 +311,21 @@ func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 		if err != nil {
 			return DomainInfo{}, errors.Join(errors.New("failed to create registrar Whois request"), err)
 		}
-		result, err = whoisClient.Fetch(request)
+		registrarResult, err := whoisClient.Fetch(request)
 		if err != nil {
-			return DomainInfo{}, errors.Join(errors.New("failed to get registrar Whois info"), err)
-		}
-
-		parsedWhois, err = whoisparser.Parse(result.String())
-		if err != nil {
-			return DomainInfo{}, errors.Join(errors.New("failed to parse registrar Whois request"), err)
+			if lookupSource == lookupSourceRegistrar {
+				return DomainInfo{}, errors.Join(errors.New("failed to get registrar Whois info"), err)
+			}
+		} else {
+			parsedRegistrarWhois, err := whoisparser.Parse(registrarResult.String())
+			if err != nil {
+				if lookupSource == lookupSourceRegistrar {
+					return DomainInfo{}, errors.Join(errors.New("failed to parse registrar Whois request"), err)
+				}
+			} else {
+				result = registrarResult
+				parsedWhois = parsedRegistrarWhois
+			}
 		}
 	}
 
@@ -302,7 +339,7 @@ func getWhoisInfo(domain string, registrarInfo bool) (DomainInfo, error) {
 	}
 
 	var registrarExpirationDate *time.Time
-	if registrarInfo {
+	if parsedRegistryWhois != parsedWhois {
 		registrarExpirationDate = parsedWhois.Domain.ExpirationDateInTime
 	}
 

@@ -1,5 +1,5 @@
-export type DomainInfoSource = "auto" | "rdap" | "whois";
-export type DomainInfoDepth = "registry" | "registrar";
+export type DomainInfoType = "auto" | "rdap" | "whois";
+export type DomainInfoSource = "auto" | "registry" | "registrar";
 
 export type DomainInfoResponse = {
   source: string,

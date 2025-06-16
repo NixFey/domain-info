@@ -22,13 +22,16 @@ func domainInfo(w http.ResponseWriter, req *http.Request) {
 	encoder.SetIndent("", strings.Repeat(" ", 2))
 
 	domain := mux.Vars(req)["domain"]
-	follow, _ := strconv.ParseBool(req.URL.Query().Get("f"))
-	lookupType, err := ParseLookupType(req.URL.Query().Get("t"))
+	lookupSource, err := ParseLookupSource(req.URL.Query().Get("source"))
+	if err != nil {
+		fmt.Printf("Error parsing lookup source: %v\n", err)
+	}
+	lookupType, err := ParseLookupType(req.URL.Query().Get("type"))
 	if err != nil {
 		fmt.Printf("Error parsing lookup type: %v\n", err)
 	}
 
-	info, err := GetInfo(lookupType, domain, follow)
+	info, err := GetInfo(lookupType, domain, lookupSource)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		encodeError := encoder.Encode(ErrorResp{
