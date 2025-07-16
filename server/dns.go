@@ -60,10 +60,10 @@ func GetDnsRecordsFromIp(hostname string, ips []net.IP, deep bool) (map[string][
 	retMap := make(map[string][]DnsRecord)
 	errs := make([]error, 0, len(ips))
 	for _, ip := range ips {
-		res, _ := getDnsRecords(c, hostname, ip)
-		//if err != nil {
-		//	errs = append(errs, err)
-		//}
+		res, err := getDnsRecords(c, hostname, ip)
+		if err != nil {
+			errs = append(errs, err)
+		}
 
 		retMap[ip.String()] = res
 	}
@@ -169,6 +169,7 @@ func getRecordData(rr dns.RR) string {
 
 func askQuestion(client *dns.Client, server string, question dns.Question, ansCh chan<- []dns.RR, errCh chan<- error) {
 	m := new(dns.Msg)
+	m.SetEdns0(4096, true)
 	m.RecursionDesired = true
 	m.Question = make([]dns.Question, 1)
 	m.Question[0] = question
