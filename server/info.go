@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/domainr/whois"
 	whoisparser "github.com/likexian/whois-parser"
 	"github.com/openrdap/rdap"
 	"golang.org/x/net/publicsuffix"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"slices"
@@ -120,8 +123,25 @@ func getRdapInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 		}
 	}
 
+	sourceIp := os.Getenv("SOURCE_IP")
+	if sourceIp == "" {
+		sourceIp = "0.0.0.0"
+	}
+
+	dialer := &net.Dialer{
+		LocalAddr: &net.TCPAddr{IP: net.ParseIP(sourceIp), Port: 0},
+	}
+
 	client := &rdap.Client{
 		Verbose: verboseFunc,
+		HTTP: &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+					conn, err := dialer.Dial(network, addr)
+					return conn, err
+				},
+			},
+		},
 	}
 
 	var rdapDomain *rdap.Domain
@@ -285,7 +305,20 @@ func getRdapInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 }
 
 func getWhoisInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
+	sourceIp := os.Getenv("SOURCE_IP")
+	if sourceIp == "" {
+		sourceIp = "0.0.0.0"
+	}
+
+	dialer := &net.Dialer{
+		LocalAddr: &net.TCPAddr{IP: net.ParseIP(sourceIp), Port: 0},
+	}
+
 	whoisClient := whois.NewClient(time.Duration(10) * time.Second)
+	whoisClient.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		conn, err := dialer.Dial(network, addr)
+		return conn, err
+	}
 	request, err := whois.NewRequest(domain)
 	if err != nil {
 		return DomainInfo{}, errors.Join(errors.New("failed to create Whois request"), err)
@@ -294,7 +327,7 @@ func getWhoisInfo(domain string, lookupSource LookupSource) (DomainInfo, error) 
 	if err != nil {
 		return DomainInfo{}, errors.Join(errors.New("failed to get Whois info"), err)
 	}
-
+	println(result.String())
 	parsedWhois, err := whoisparser.Parse(result.String())
 	if err != nil {
 		return DomainInfo{}, errors.Join(errors.New("failed to parse Whois request"), err)
@@ -306,8 +339,11 @@ func getWhoisInfo(domain string, lookupSource LookupSource) (DomainInfo, error) 
 		cleanHost := strings.TrimFunc(parsedWhois.Domain.WhoisServer, func(r rune) bool {
 			return r == '/' || unicode.IsSpace(r)
 		})
-		request, err := whois.NewRequest(domain)
-		request.Host = cleanHost
+		request := &whois.Request{
+			Query: domain,
+			Host:  cleanHost,
+		}
+		err := request.Prepare()
 		if err != nil {
 			return DomainInfo{}, errors.Join(errors.New("failed to create registrar Whois request"), err)
 		}
@@ -317,6 +353,7 @@ func getWhoisInfo(domain string, lookupSource LookupSource) (DomainInfo, error) 
 				return DomainInfo{}, errors.Join(errors.New("failed to get registrar Whois info"), err)
 			}
 		} else {
+			println(registrarResult.String())
 			parsedRegistrarWhois, err := whoisparser.Parse(registrarResult.String())
 			if err != nil {
 				if lookupSource == lookupSourceRegistrar {
