@@ -7,7 +7,6 @@ import (
 	"github.com/domainr/whois"
 	whoisparser "github.com/likexian/whois-parser"
 	"github.com/openrdap/rdap"
-	"golang.org/x/net/publicsuffix"
 	"net"
 	"net/http"
 	"net/url"
@@ -86,7 +85,11 @@ func ParseLookupSource(s string) (LookupSource, error) {
 }
 
 func getTldAndSld(domain string) (string, error) {
-	return publicsuffix.EffectiveTLDPlusOne(domain)
+	parts := strings.Split(domain, ".")
+	if len(parts) < 2 {
+		return "", errors.New("domain is too short")
+	}
+	return parts[len(parts)-2] + "." + parts[len(parts)-1], nil
 }
 
 func GetInfo(lookupType LookupType, domain string, lookupSource LookupSource) (DomainInfo, error) {
