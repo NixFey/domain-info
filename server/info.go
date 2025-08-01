@@ -7,6 +7,7 @@ import (
 	"github.com/domainr/whois"
 	whoisparser "github.com/likexian/whois-parser"
 	"github.com/openrdap/rdap"
+	"github.com/zonedb/zonedb"
 	"net"
 	"net/http"
 	"net/url"
@@ -85,11 +86,14 @@ func ParseLookupSource(s string) (LookupSource, error) {
 }
 
 func getTldAndSld(domain string) (string, error) {
+	// Returns the "com" zone or "co.uk" zone.
+	// This is preferred to the PSL because it will say "amazonaws.com" is an
+	// effective TLD but RDAP queries on "xyz.amazonaws.com" will fail.
+	zone := zonedb.PublicZone(strings.ToLower(domain))
+
+	dotsInZone := strings.Count(zone.Domain, ".")
 	parts := strings.Split(domain, ".")
-	if len(parts) < 2 {
-		return "", errors.New("domain is too short")
-	}
-	return parts[len(parts)-2] + "." + parts[len(parts)-1], nil
+	return strings.Join(parts[len(parts)-dotsInZone-2:], "."), nil
 }
 
 func GetInfo(lookupType LookupType, domain string, lookupSource LookupSource) (DomainInfo, error) {

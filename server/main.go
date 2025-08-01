@@ -17,9 +17,16 @@ type ErrorResp struct {
 	ErrorMessages []string `json:"errors"`
 }
 
-func domainInfo(w http.ResponseWriter, req *http.Request) {
+func diJsonEncoder(w http.ResponseWriter) *json.Encoder {
+	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", strings.Repeat(" ", 2))
+
+	return encoder
+}
+
+func domainInfo(w http.ResponseWriter, req *http.Request) {
+	encoder := diJsonEncoder(w)
 
 	domain := mux.Vars(req)["domain"]
 	lookupSource, err := ParseLookupSource(req.URL.Query().Get("source"))
@@ -46,10 +53,6 @@ func domainInfo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Set the content type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Encode the data to JSON and write it to the response
 	err = encoder.Encode(info)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -58,8 +61,7 @@ func domainInfo(w http.ResponseWriter, req *http.Request) {
 }
 
 func dnsInfo(w http.ResponseWriter, req *http.Request) {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", strings.Repeat(" ", 2))
+	encoder := diJsonEncoder(w)
 
 	hostname := mux.Vars(req)["hostname"]
 	ns := req.URL.Query().Get("ns")
@@ -106,9 +108,6 @@ func dnsInfo(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Set the content type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
 	// Encode the data to JSON and write it to the response
 	err = encoder.Encode(info)
 	if err != nil {
@@ -122,11 +121,13 @@ func main() {
 	r.HandleFunc("/info/{domain}", domainInfo).Methods("GET")
 	r.HandleFunc("/dns/{hostname}", dnsInfo).Methods("GET")
 
+	addr := ":3333"
 	srv := &http.Server{
 		Handler: r,
-		Addr:    ":3333",
+		Addr:    addr,
 	}
-	fmt.Println("Listening on :3333")
+
+	fmt.Printf("Listening on %s", addr)
 	err := srv.ListenAndServe()
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
