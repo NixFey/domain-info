@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import Loading from "@/components/loading";
 import Button from "@/components/button";
 
-export default function DnsInfo({ initialRecords, updateRecordsAction }: { initialRecords: Record<string, DnsRecord[]>, updateRecordsAction: (deep: boolean, provider: DnsProvider) => Promise<Record<string, DnsRecord[]>> }) {
+export default function DnsInfo({ initialRecords, updateRecordsAction }: { initialRecords: {type: "error", errors: string[]} | Record<string, DnsRecord[]>, updateRecordsAction: (deep: boolean, provider: DnsProvider) => Promise<{type: "error", errors: string[]} | Record<string, DnsRecord[]>> }) {
   const sectionRef = useRef(null);
   const [deep, setDeep] = useState(false);
   const [provider, setProvider] = useState<DnsProvider>("authoritative");
@@ -52,8 +52,14 @@ export default function DnsInfo({ initialRecords, updateRecordsAction }: { initi
       </div>
       
       {loading && <Loading />}
-      {Object.keys(dnsRecords).map(source => {
-        const sourceRecords = dnsRecords[source];
+      {"errors" in dnsRecords && Array.isArray(dnsRecords.errors) && <div className="my-4 mb-200 max-w-7xl mx-auto border-2 border-red-500/[0.5] rounded-lg p-4">
+        <p>An error occurred getting DNS:</p>
+          {dnsRecords.errors.length > 0 && (<ul className="my-4">
+            {(dnsRecords.errors as string[]).map((e: string, idx: number) => (<li key={idx}>{e}</li>))}
+          </ul>)}
+      </div>}
+      {dnsRecords.type !== "error" && Object.keys(dnsRecords).map(source => {
+        const sourceRecords = (dnsRecords as Record<string, DnsRecord[]>)[source];
         const hasMultipleSources = Object.keys(dnsRecords).length > 1;
         return (<div key={source}>
           {hasMultipleSources && <h3 className="text-lg font-bold">{source}</h3>}

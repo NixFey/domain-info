@@ -11,7 +11,7 @@ export default async function DnsInfoWrapper({ domainInfo, dnsName }: { domainIn
   //   }
   // })).json();
   
-  async function updateRecordsAction(deep: boolean, provider: DnsProvider): Promise<Record<string, DnsRecord[]>> {
+  async function updateRecordsAction(deep: boolean, provider: DnsProvider): Promise<{type: "error", errors: string[]} | Record<string, DnsRecord[]>> {
     "use server";
     if (!domainInfo.nameservers || domainInfo.nameservers.length === 0) {
       return {};
