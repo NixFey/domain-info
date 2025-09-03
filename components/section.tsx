@@ -4,7 +4,7 @@ export default function Section(
   { title, id, hotkey, children, ref }: { title: string, id: string, hotkey?: string, children: React.ReactNode, ref?: Ref<HTMLElement> }
 ) {
   return (
-    <section ref={ref} id={id} className="m-2 p-4 rounded-lg border-1 border-foreground/[0.5] scroll-mt-2 focus:border-blue-500 break-words">
+    <section ref={ref} id={id} className="m-2 p-4 rounded-lg border-1 border-foreground/[0.5] scroll-mt-10 scroll-pt-10 focus:border-blue-500 break-words">
       <h2 className="text-2xl my-1 w-full flex">
         {title}
         { hotkey

@@ -7,8 +7,16 @@ export default function DomainResultClientHelper() {
   const router = useRouter();
   
   function scrollAndFocusId(id: string) {
-    router.replace(`#${id}`);
-    document.getElementById(id)?.focus();
+    window.history.replaceState(null, "", `#${id}`);
+    const el = [...document.querySelectorAll(`#${id}`)].find(e => e.checkVisibility());
+    if (el) {
+      console.warn(el);
+      
+      (el as HTMLElement).focus();
+      el.scrollIntoView({
+        block: "start"
+      });
+    }
   }
 
   const handleKeyPress = useCallback((evt: KeyboardEvent) => {

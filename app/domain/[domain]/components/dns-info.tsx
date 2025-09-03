@@ -2,52 +2,68 @@
 
 import Section from "@/components/section";
 import { DnsProvider, DnsRecord } from "@/lib/dns";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Loading from "@/components/loading";
 import Button from "@/components/button";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function DnsInfo({ initialRecords, updateRecordsAction }: { initialRecords: {type: "error", errors: string[]} | Record<string, DnsRecord[]>, updateRecordsAction: (deep: boolean, provider: DnsProvider) => Promise<{type: "error", errors: string[]} | Record<string, DnsRecord[]>> }) {
-  const sectionRef = useRef(null);
-  const [deep, setDeep] = useState(false);
-  const [provider, setProvider] = useState<DnsProvider>("authoritative");
+  // const sectionRef = useRef(null);
   const [dnsRecords, setRecords] = useState(initialRecords);
   const [loading, setLoading] = useState(true);
+
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Get a new searchParams string by merging the current
+  // searchParams with a provided key/value pair
+  const updateQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set(name, value)
+
+      window.history.replaceState(null, "", pathname + "?" + params.toString());
+    },
+    [pathname, searchParams]
+  )
   
   useEffect(() => {
-    if (!updateRecordsAction) return;
+    const provider = (searchParams.get("dnsprovider") as DnsProvider | null) ?? "authoritative";
+    const deep = searchParams.get("dnsdeep") === "true";
+    if (!updateRecordsAction || !provider) return;
     (async () => {
       setLoading(true);
       try {
-        setRecords(await updateRecordsAction(deep, provider))
+        setRecords(await updateRecordsAction(deep, provider));
       } finally {
         setLoading(false);
       }
     })();
-  }, [deep, provider, updateRecordsAction]);
+  }, [searchParams.get("dnsprovider"), searchParams.get("dnsdeep"), updateRecordsAction]);
   
   if (!dnsRecords) return;
   
   return (
-    <Section title="DNS Records" id="dns-info" hotkey="d" ref={sectionRef}>
+    <Section title="DNS Records" id="dns-info" hotkey="d"> {/*ref={sectionRef}>*/}
       <div className="mb-2 mx-[-4]">
         <p className="px-2 font-bold">Provider</p>
-        <Button active={provider === "authoritative"} onclick={() => {
-          setProvider("authoritative");
+        <Button active={searchParams.get("dnsprovider") === "authoritative"} onclick={() => {
+          updateQueryString("dnsprovider", "authoritative");
         }}>Authoritative</Button>
-        <Button active={provider === "google"} onclick={() => {
-          setProvider("google");
+        <Button active={searchParams.get("dnsprovider") === "google"} onclick={() => {
+          updateQueryString("dnsprovider", "google");
         }}>Google</Button>
-        <Button active={provider === "cloudflare"} onclick={() => {
-          setProvider("cloudflare");
+        <Button active={searchParams.get("dnsprovider") === "cloudflare"} onclick={() => {
+          updateQueryString("dnsprovider", "cloudflare");
         }}>Cloudflare</Button>
       </div>
       <div className="mb-2 mx-[-4]">
         <p className="px-2 font-bold">Deep/Shallow</p>
-        <Button active={deep} onclick={() => {
-          setDeep(true);
+        <Button active={searchParams.get("dnsdeep") === "true"} onclick={() => {
+          updateQueryString("dnsdeep", "true");
         }}>All DNS Servers</Button>
-        <Button active={!deep} onclick={() => {
-          setDeep(false);
+        <Button active={searchParams.get("dnsdeep") !== "true"} onclick={() => {
+          updateQueryString("dnsdeep", "false");
         }}>Random DNS Server</Button>
       </div>
       
