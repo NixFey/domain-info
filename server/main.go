@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"strconv"
 	"strings"
@@ -87,9 +87,9 @@ func dnsInfo(w http.ResponseWriter, req *http.Request) {
 	if ns != "" {
 		info, err = GetDnsRecordsFromNs(hostname, strings.Split(ns, ","), deep)
 	} else if ip != "" {
-		var ips []net.IP
+		var ips []netip.Addr
 		for _, ip := range strings.Split(ip, ",") {
-			ips = append(ips, net.ParseIP(ip))
+			ips = append(ips, netip.MustParseAddr(ip))
 		}
 
 		info, err = GetDnsRecordsFromIp(hostname, ips, deep)

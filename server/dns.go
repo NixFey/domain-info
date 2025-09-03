@@ -2,11 +2,14 @@ package main
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/miekg/dns"
+	"maps"
 	"math/rand"
 	"net"
+	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
@@ -20,24 +23,28 @@ type DnsRecord struct {
 }
 
 func GetDnsRecordsFromNs(hostname string, nameservers []string, deep bool) (map[string][]DnsRecord, error) {
-	var ips []net.IP
-	for _, nameserver := range nameservers {
-		resp, _ := net.LookupIP(nameserver)
-
-		ips = append(ips, resp...)
+	ips := make(map[netip.Addr]struct{})
+	res := Resolver{
+		queryCache: map[dnsQuery]dnsMsgWithExpiry{},
 	}
+	for _, nameserver := range nameservers {
+		resp, _, err := res.Resolve(context.Background(), nameserver)
+		if err != nil {
+			return nil, err
+		}
 
-	ips = slices.DeleteFunc(ips, func(ip net.IP) bool {
-		return ip.To4() == nil
-	})
+		for _, addr := range resp {
+			ips[addr] = struct{}{}
+		}
+	}
 
 	if ips == nil || len(ips) == 0 {
 		return nil, errors.New("failed to get ip for nameservers")
 	}
-	return GetDnsRecordsFromIp(hostname, ips, deep)
+	return GetDnsRecordsFromIp(hostname, slices.Collect(maps.Keys(ips)), deep)
 }
 
-func GetDnsRecordsFromIp(hostname string, ips []net.IP, deep bool) (map[string][]DnsRecord, error) {
+func GetDnsRecordsFromIp(hostname string, ips []netip.Addr, deep bool) (map[string][]DnsRecord, error) {
 	c := new(dns.Client)
 
 	if !deep {
@@ -76,7 +83,7 @@ func GetDnsRecordsFromIp(hostname string, ips []net.IP, deep bool) (map[string][
 	return retMap, nil
 }
 
-func getDnsRecords(client *dns.Client, hostname string, addr net.IP) ([]DnsRecord, error) {
+func getDnsRecords(client *dns.Client, hostname string, addr netip.Addr) ([]DnsRecord, error) {
 	hostname = strings.TrimSuffix(hostname, ".") + "."
 	server := net.JoinHostPort(addr.String(), "53")
 
