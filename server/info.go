@@ -178,7 +178,12 @@ func getRdapInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 	registrarIanaId := 0
 	if registrarIdx >= 0 {
 		entity := rdapDomain.Entities[registrarIdx]
-		registrar = entity.VCard.Name()
+
+		if entity.VCard != nil {
+			// VCard shouldn't be null, but can be if parsing fails due to bad RDAP implementation (seen with
+			// CentralNIC)
+			registrar = entity.VCard.Name()
+		}
 
 		ianaIdIdx := slices.IndexFunc(entity.PublicIDs, func(e rdap.PublicID) bool {
 			return strings.ToLower(e.Type) == "iana registrar id"

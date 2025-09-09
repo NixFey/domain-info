@@ -7,7 +7,8 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/likexian/whois-parser v1.24.20
 	github.com/miekg/dns v1.1.67
-	github.com/openrdap/rdap v0.9.1
+	github.com/openrdap/rdap v0.9.2-0.20240517203139-eb57b3a8dedd
+	github.com/zonedb/zonedb v1.0.5268
 )
 
 require (
@@ -19,7 +20,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	github.com/zonedb/zonedb v1.0.5268 // indirect
 	golang.org/x/crypto v0.40.0 // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/net v0.42.0 // indirect

@@ -27,9 +27,11 @@ export default async function DomainResult({ params, searchParams }: DomainResul
     source: source ?? "auto"
   });
   const resp = await fetch(`${process.env.API_BASE}/info/${domain}?${queryParams}`);
-  console.log("got data. yay. (not yay)")
   if (!resp.ok) {
     try {
+      if (!resp.headers.get("content-type")?.includes("json")) {
+        throw new Error("Response was not JSON");
+      }
       const json = await resp.json();
       if ("errors" in json && Array.isArray(json.errors)) {
         return (
