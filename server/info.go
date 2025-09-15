@@ -4,10 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/domainr/whois"
-	whoisparser "github.com/likexian/whois-parser"
-	"github.com/openrdap/rdap"
-	"github.com/zonedb/zonedb"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +13,11 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/domainr/whois"
+	whoisparser "github.com/likexian/whois-parser"
+	"github.com/openrdap/rdap"
+	"github.com/zonedb/zonedb"
 )
 
 type DomainInfo struct {
@@ -90,6 +91,10 @@ func getTldAndSld(domain string) (string, error) {
 	// This is preferred to the PSL because it will say "amazonaws.com" is an
 	// effective TLD but RDAP queries on "xyz.amazonaws.com" will fail.
 	zone := zonedb.PublicZone(strings.ToLower(domain))
+
+	if zone == nil {
+		return "", errors.New("unable to determine second-level domain")
+	}
 
 	dotsInZone := strings.Count(zone.Domain, ".")
 	parts := strings.Split(domain, ".")
