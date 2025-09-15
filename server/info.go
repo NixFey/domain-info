@@ -97,8 +97,10 @@ func getTldAndSld(domain string) (string, error) {
 	}
 
 	dotsInZone := strings.Count(zone.Domain, ".")
+
 	parts := strings.Split(domain, ".")
-	return strings.Join(parts[len(parts)-dotsInZone-2:], "."), nil
+	partsToSkip := max(len(parts)-dotsInZone-2, 0)
+	return strings.Join(parts[partsToSkip:], "."), nil
 }
 
 func GetInfo(lookupType LookupType, domain string, lookupSource LookupSource) (DomainInfo, error) {
