@@ -262,7 +262,7 @@ func getRdapInfo(domain string, lookupSource LookupSource) (DomainInfo, error) {
 		}
 		if evt.Action == "registration" {
 			created = &eventTime
-		} else if evt.Action == "expiration" && rdapDomain != registryRdapDomain {
+		} else if evt.Action == "registrar expiration" && rdapDomain != registryRdapDomain {
 			registrarExpirationDate = &eventTime
 		} else if evt.Action == "last changed" {
 			updated = &eventTime
